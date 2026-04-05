@@ -1,23 +1,20 @@
-# 🛍️ Luxe E-Commerce Platform
+# 👕 ClothStore AI - Gen AI Powered E-Commerce
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![Pydantic AI](https://img.shields.io/badge/Pydantic_AI-F05023?style=for-the-badge&logo=ai&logoColor=white)](https://pydantic.dev/)
 
-Welcome to Luxe E-Commerce! Think of this project as a complete digital shopping mall. It has a **Frontend** (the beautiful storefront you see), a **Backend** (the busy warehouse manager fulfilling orders), a **Database** (the inventory ledger), and a **Pydantic AI Assistant** (your intelligent virtual salesman).
+Welcome to **ClothStore AI**! This project is a modern LLM-powered shopping experience. It features a sleek **Frontend** (Vanilla JS), a robust **FastAPI Backend**, a **MongoDB** database, and an intelligent **AI Shopping Assistant** powered by **Pydantic AI**.
 
 ---
 
-## ✨ Key Features (Simple Explanation)
-
-- **🔐 Secure Vault (Authentication)**: Register and login safely. We shred (hash) your passwords so nobody can read them.
-- **📦 Store Shelves (Products)**: View our dynamic catalog. You can filter by category (Men, Women, Kids) easily.
-- **🛒 Shopping Cart**: Pick items and keep them in your basket until you are ready to buy.
-- **📜 Receipts (Order History)**: Track the things you've successfully purchased.
-- **🤖 Virtual Salesman (AI Chatbot)**: A super-smart assistant powered by **Pydantic AI** (Llama 3.1) that can instantly search the warehouse and recommend exact products you ask for!
-- **🔭 X-Ray Vision (Logfire)**: We use **Pydantic Logfire** to seamlessly monitor our warehouse (backend) and AI Salesman in real-time.
-- **🛠️ Manager's Desk (Admin Dashboard)**: A special area for store owners to add, update, or remove clothing items.
+- **📦 Dynamic Catalog**: Browse and filter clothing products by category (Men, Women, Kids) and price range.
+- **🤖 AI Shopping Assistant**: A super-smart agent powered by **Pydantic AI** (Qwen-3 32B via Groq) that understands natural language queries and finds products instantly.
+- **🛒 Smart Shopping Cart**: Add items to your cart and manage them with ease.
+- **🚀 Bulk Store Generation**: Instantly populate your database with 500+ diverse demo products for testing.
+- **📜 Simple Checkout**: Place orders using just an email identifier—no complex auth required for this demo.
+- **🔭 Deep Observability**: Integrated with **Pydantic Logfire** for real-time monitoring of both the API and the AI agent.
+- **🛠️ Admin Control**: Comprehensive endpoints for full CRUD operations on product inventory.
 
 ---
 
@@ -48,18 +45,19 @@ Check the **[`docs/README.md`](./docs/README.md)** for the full table of content
 
 We created a simple switch to turn on the whole mall at once:
 
-1. **Get the Keys (Setup)**
-   - Create a `.env` file in the main folder (if one was provided) layout out your database link.
-   - Make sure you have **Node.js** and **Python** installed on your computer.
+1. **Prepare the Keys (Setup)**
+   - Create a `.env` file in the root directory.
+   - Add your `MONGO_URI`, `GROQ_API_KEY`, and `LOGFIRE_TOKEN`.
+   - Ensure **Python 3.10+** is installed.
 
 2. **Flick the Switch (Run Everything)**
    ```bash
    python main.py
    ```
-   *This magic script will:*
-   - Wake up the warehouse manager (FastAPI backend).
-   - Automatically serve the native frontend.
-   - Open your browser to `http://localhost:8000`.
+   *This starts the server and:*
+   - Launches the FastAPI backend on `http://localhost:8000`.
+   - Automatically serves the built-in frontend.
+   - Monitors performance via Logfire.
 
 ---
 
@@ -78,21 +76,19 @@ python main.py
 
 ---
 
-## 📖 Available Doors (API Endpoints)
+FastAPI automatically generates an interactive map for all endpoints:
+- Go to **`http://localhost:8000/docs`** to test the API!
 
-FastAPI gives us a great map of all the backend doors:
-- Go to **`http://localhost:8080/docs`** to see the interactive map!
-
-Here are the main doors (Endpoints):
+Here are the primary routes:
 | What it does | Method | Door (URL) |
 | :--- | :--- | :--- |
-| Create account | `POST` | `/register` |
-| Login | `POST` | `/login` |
-| See clothes | `GET` | `/products` |
-| Add to cart | `POST` | `/cart/add` |
-| See cart | `GET` | `/cart/{email}` |
-| Place order | `POST` | `/orders` |
-| Talk to AI | `POST` | `/chat` |
+| Browse/List Products | `GET` | `/products` |
+| Add a New Product | `POST` | `/products` |
+| Bulk Generate (500 Demo Items) | `POST` | `/products/bulk-generate-500` |
+| Add item to Cart | `POST` | `/cart/add` |
+| Get User's Cart | `GET` | `/cart/{email}` |
+| Place New Order | `POST` | `/orders` |
+| Talk to AI Assistant | `POST` | `/chat` |
 
 ---
 
