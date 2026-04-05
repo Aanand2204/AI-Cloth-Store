@@ -70,6 +70,7 @@ export async function renderCart() {
         
         <div style="margin-top: 2rem; display: flex; gap: 1rem;">
           <a href="#/" class="btn btn-outline" style="flex: 1; text-align: center; text-decoration: none;">Keep Shopping</a>
+          <button id="clearCartBtn" class="btn btn-outline" style="flex: 1; color: #DC2626; border-color: #DC2626; font-size: 1.1rem;">Clear Cart 🗑️</button>
           <button id="buyAllBtn" class="btn btn-primary" style="flex: 2; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
             <span>Buy All Now</span>
             <span>🚀</span>
@@ -77,6 +78,26 @@ export async function renderCart() {
         </div>
       </div>
     `;
+
+    document.getElementById('clearCartBtn')?.addEventListener('click', async (e) => {
+      if (!confirm('Are you sure you want to clear your cart?')) return;
+      
+      const btn = e.target.closest('button');
+      btn.disabled = true;
+      btn.innerHTML = 'Clearing... ⏳';
+      
+      try {
+        await clearCart(state.sessionId);
+        state.cartItemCount = 0;
+        
+        // Re-render the cart right away
+        renderCart();
+      } catch (err) {
+        alert('Failed to clear cart.');
+        btn.disabled = false;
+        btn.innerHTML = 'Clear Cart 🗑️';
+      }
+    });
 
     document.getElementById('buyAllBtn')?.addEventListener('click', async (e) => {
       const btn = e.target.closest('button');

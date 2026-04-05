@@ -28,7 +28,6 @@ def get_cart(user_email: str):
     items = list(cart_collection.find({"user_email": user_email}, {"_id": 0}))
     return items
 
-# not utilized -- go ahead and use this 
 @router.delete("/{user_email}")
 def clear_cart(user_email: str):
     """
