@@ -61,6 +61,10 @@ coverage/
 # mypy
 .mypy_cache/
 
+.logfire
+
+experiments\.logfire
+
 # Pytest
 .pytest_cache/
 
