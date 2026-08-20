@@ -23,6 +23,7 @@ class Order(BaseModel):
     user_email: str
     product_name: str
     quantity: int
+    price: int
 
 
 class CartItem(BaseModel):
@@ -30,3 +31,31 @@ class CartItem(BaseModel):
     user_email: str
     product_name: str
     quantity: int
+
+
+class UserRegister(BaseModel):
+    """Registration payload: username, email, and plaintext password (hashed before storage)."""
+    username: str
+    email: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    """Login payload: email or username, plus password."""
+    identifier: str
+    password: str
+
+
+class ProfileUpdate(BaseModel):
+    """Edit-profile payload — current_password re-verifies identity before any change is applied."""
+    current_email: str
+    current_password: str
+    new_username: Optional[str] = None
+    new_email: Optional[str] = None
+    new_password: Optional[str] = None
+
+
+class AccountDelete(BaseModel):
+    """Payload to permanently delete an account."""
+    email: str
+    password: str

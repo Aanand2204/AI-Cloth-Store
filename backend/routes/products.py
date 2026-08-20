@@ -1,13 +1,16 @@
 """
-Product management routes including addition, retrieval, updating, and deletion.
+Core product routes: add, list, update, delete. Bulk ingestion (demo data,
+JSON bulk-add, Excel+zip upload) lives in products_bulk.py.
 """
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from ..models import Product
-from ..database import products_collection
-import base64
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from bson import ObjectId
 
+from ..database import products_collection
+from ..auth import require_admin
+from ..utils.images import encode_upload_to_base64, resolve_image_field
+
 router = APIRouter(prefix="/products", tags=["Products"])
+
 
 @router.post("")
 async def add_product(
@@ -18,19 +21,14 @@ async def add_product(
     size: str = Form("M,L"),
     color: str = Form("Black"),
     image: UploadFile = File(...),
+    admin_email: str = Depends(require_admin),
 ):
     """
     Add a new product to the store with an image upload.
     The image is stored as base64 string in MongoDB.
     """
-    # Read image file and convert to Base64
-    image_data = await image.read()
-    base64_image = base64.b64encode(image_data).decode("utf-8")
+    base64_image, content_type = await encode_upload_to_base64(image)
 
-    # Determine content type
-    content_type = image.content_type or "image/jpeg"
-
-    # Create product document and insert into database
     product = {
         "name": name,
         "description": description,
@@ -74,31 +72,13 @@ def get_products(category: str = "", min_price: int = None, max_price: int = Non
         if "reviews" not in product:
             product["reviews"] = 0
 
-        # If the product already has a plain image URL, use it directly
-        if "image" in product and product["image"] and not isinstance(product["image"], str) is False:
-            if product["image"].startswith("http"):
-                pass  # Already a valid URL, keep it as-is
-            elif "image_data" in product and "image_content_type" in product:
-                # Convert base64 image to data URL for frontend display
-                product["image"] = (
-                    f"data:{product['image_content_type']};base64,{product['image_data']}"
-                )
-        elif "image_data" in product and "image_content_type" in product:
-            # Convert base64 image to data URL for frontend display
-            product["image"] = (
-                f"data:{product['image_content_type']};base64,{product['image_data']}"
-            )
-
-        # Always clean up raw binary fields from response
-        product.pop("image_data", None)
-        product.pop("image_content_type", None)
-
+        resolve_image_field(product)
         products.append(product)
     return products
 
 
 @router.delete("")
-def delete_all_products():
+def delete_all_products(admin_email: str = Depends(require_admin)):
     """
     Delete all products from the store.
     """
@@ -106,102 +86,14 @@ def delete_all_products():
     return {"message": f"{result.deleted_count} products deleted"}
 
 
-@router.post("/bulk-generate-500")
-def bulk_generate_500():
-    """
-    Generate 500 demo clothing products across 3 categories: men, women, kids.
-    Items are consistent and keyword-searchable (e.g. "Classic Blue Jeans").
-    Each category gets ~166 products cycling through real clothing item types.
-    Images come from loremflickr.com using category-specific fashion keywords.
-    """
-    import random
-
-    adjectives = ["Classic", "Modern", "Premium", "Casual", "Elegant", "Trendy",
-                  "Vintage", "Sporty", "Bold", "Slim", "Relaxed", "Formal"]
-    colors = ["Black", "White", "Navy Blue", "Red", "Olive", "Beige",
-              "Burgundy", "Mustard", "Grey", "Pink", "Teal", "Brown"]
-
-    categories = [
-        {
-            "name": "men",
-            "items": ["Shirt", "T-Shirt", "Jeans", "Chinos", "Blazer",
-                      "Jacket", "Polo", "Sweater", "Hoodie", "Shorts"],
-            "keywords": ["menswear", "mens+shirt", "mens+fashion", "mens+jacket"],
-        },
-        {
-            "name": "women",
-            "items": ["Dress", "Kurti", "Saree", "Lehenga", "Blouse",
-                      "Top", "Skirt", "Palazzo", "Jumpsuit", "Cardigan"],
-            "keywords": ["womens+fashion", "dress", "womens+clothing", "blouse"],
-        },
-        {
-            "name": "kids",
-            "items": ["T-Shirt", "Frock", "Dungaree", "Shorts", "Jacket",
-                      "Pajama", "Romper", "Hoodie", "Sweater", "Shirt"],
-            "keywords": ["kids+fashion", "children+clothing", "kids+wear"],
-        },
-    ]
-
-    descriptions = [
-        "A comfortable fit for everyday wear.",
-        "Premium quality fabric, perfect for all occasions.",
-        "Stylish and versatile — a must-have for your wardrobe.",
-        "Crafted with care for maximum comfort and durability.",
-        "Trendy design that keeps you looking sharp all day.",
-        "Soft, breathable material ideal for the season.",
-        "A timeless piece that pairs well with everything.",
-        "Lightweight and easy to wear — perfect for daily use.",
-        "A bold look that makes a statement.",
-        "Expertly tailored for a modern silhouette.",
-    ]
-
-    sizes_pool = ["S", "M", "L", "XL", "XXL"]
-    products = []
-
-    for i in range(500):
-        cat = categories[i % 3]          # cycle evenly: men, women, kids
-        item = cat["items"][i % len(cat["items"])]   # cycle through item types
-        adj  = adjectives[i % len(adjectives)]
-        color = colors[i % len(colors)]
-        keyword = cat["keywords"][i % len(cat["keywords"])]
-        seed = 1000 + i
-
-        products.append({
-            "name": f"{adj} {color} {item}",
-            "description": descriptions[i % len(descriptions)],
-            "price": random.randint(299, 7999),
-            "category": cat["name"],
-            "size": random.sample(sizes_pool, k=random.randint(2, 4)),
-            "color": [color],
-            "image": f"https://loremflickr.com/400/500/{keyword}?lock={seed}",
-            "inStock": True,
-            "rating": round(random.uniform(3.5, 5.0), 1),
-            "reviews": random.randint(5, 300),
-        })
-
-    products_collection.insert_many(products)
-    return {"message": "500 demo products generated successfully!"}
-
-
-@router.post("/bulk")
-def add_multiple_products(products_list: list[Product]):
-    """
-    Add multiple products at once via bulk operation.
-    """
-    product_list = [product.model_dump() if hasattr(product, "model_dump") else product.dict() for product in products_list]
-    products_collection.insert_many(product_list)
-    return {"message": "Multiple products added successfully"}
-
-
-
 @router.delete("/{id}")
-def delete_product(id: str):
+def delete_product(id: str, admin_email: str = Depends(require_admin)):
     """
     Delete a specific product by its ID.
     """
     try:
         result = products_collection.delete_one({"_id": ObjectId(id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid ID format")
 
     if result.deleted_count == 0:
@@ -220,12 +112,12 @@ async def update_product(
     size: str = Form(None),
     color: str = Form(None),
     image: UploadFile = File(None),
+    admin_email: str = Depends(require_admin),
 ):
     """
     Update an existing product's fields. Only fields provided will be modified.
     """
     try:
-        # Build update dictionary with provided fields
         update_data = {}
         if name is not None:
             update_data["name"] = name
@@ -240,18 +132,15 @@ async def update_product(
         if color is not None:
             update_data["color"] = color.split(",")
 
-        # Handle optional image upload
         if image:
-            image_data = await image.read()
-            base64_image = base64.b64encode(image_data).decode("utf-8")
-            content_type = image.content_type or "image/jpeg"
+            base64_image, content_type = await encode_upload_to_base64(image)
             update_data["image_data"] = base64_image
             update_data["image_content_type"] = content_type
 
         result = products_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": update_data}
         )
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid ID format")
 
     if result.matched_count == 0:

@@ -1,5 +1,5 @@
 # python stuff
-passlib[bcrypt]
+bcrypt
 pymongo
 python-dotenv
 
@@ -8,6 +8,7 @@ fastapi
 uvicorn
 jinja2
 python-multipart
+openpyxl
 
 # observability
 logfire
@@ -18,3 +19,4 @@ nest-asyncio
 pydantic-ai
 groq
 pydantic-ai-slim[tavily]
+pydantic-evals

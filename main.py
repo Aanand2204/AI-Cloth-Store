@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from backend.routes import products, orders, cart, chatbot
+from backend.routes import products, products_bulk, orders, cart, chatbot, auth, profile
 import os
 import uvicorn
 import logfire
@@ -22,9 +22,12 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Include API route modules
 app.include_router(products.router)
+app.include_router(products_bulk.router)
 app.include_router(orders.router)
 app.include_router(cart.router)
 app.include_router(chatbot.router)
+app.include_router(auth.router)
+app.include_router(profile.router)
 
 # Serve uploaded files statically
 from fastapi.staticfiles import StaticFiles

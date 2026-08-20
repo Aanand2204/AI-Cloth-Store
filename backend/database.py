@@ -22,4 +22,8 @@ products_collection = db["products"]
 orders_collection = db["orders"]
 cart_collection = db["cart"]
 
+# Enforce unique accounts at the database level
+users_collection.create_index("email", unique=True)
+users_collection.create_index("username", unique=True)
+
 

@@ -85,7 +85,7 @@ export async function renderProductDetail(id) {
       e.target.disabled = true;
       e.target.textContent = 'Processing...';
       
-      await placeOrder(state.sessionId, product.name, 1);
+      await placeOrder(state.sessionId, product.name, 1, product.price);
       
       e.target.textContent = 'Order Placed! 🚀';
       setTimeout(() => {

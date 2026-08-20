@@ -9,7 +9,7 @@ Welcome to **ClothStore AI**! This project is a modern LLM-powered shopping expe
 ---
 
 - **📦 Dynamic Catalog**: Browse and filter clothing products by category (Men, Women, Kids) and price range.
-- **🤖 AI Shopping Assistant**: A super-smart agent powered by **Pydantic AI** (Qwen-3 32B via Groq) that understands natural language queries and finds products instantly.
+- **🤖 AI Shopping Assistant**: A super-smart agent powered by **Pydantic AI** (Qwen3 via Groq) that understands natural language queries and finds products instantly.
 - **🛒 Smart Shopping Cart**: Add items to your cart and manage them with ease.
 - **🚀 Bulk Store Generation**: Instantly populate your database with 500+ diverse demo products for testing.
 - **📜 Simple Checkout**: Place orders using just an email identifier—no complex auth required for this demo.

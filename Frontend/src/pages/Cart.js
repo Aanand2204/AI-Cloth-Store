@@ -106,7 +106,7 @@ export async function renderCart() {
       
       try {
         // Place individual orders for every item in the cart
-        const promises = cartItems.map(item => placeOrder(state.sessionId, item.product_name, item.quantity));
+        const promises = cartItems.map(item => placeOrder(state.sessionId, item.product_name, item.quantity, item.price));
         await Promise.all(promises);
         
         // Wipe the cart
