@@ -1,5 +1,6 @@
 import { state, login } from '../../services/state.js';
 import { loginUser, registerUser, checkIsAdmin } from '../../services/api_v2.js';
+import { renderGoogleSignIn, setupGoogleSignIn } from './googleSignIn.js';
 
 let authMode = 'login'; // 'login' | 'register'
 
@@ -13,6 +14,12 @@ export function renderAuthForms() {
       <div style="background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 2rem;">
         ${authMode === 'login' ? `
           <h2 class="admin-form-title" style="margin-top: 0;">Login</h2>
+          ${renderGoogleSignIn()}
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; color: #9CA3AF; font-size: 0.8rem;">
+            <div style="flex: 1; border-top: 1px solid #E5E7EB;"></div>
+            or
+            <div style="flex: 1; border-top: 1px solid #E5E7EB;"></div>
+          </div>
           <input placeholder="Email or username" class="form-input" id="loginIdentifier" style="width: 100%; margin-bottom: 1rem;" />
           <input type="password" placeholder="Password" class="form-input" id="loginPassword" style="width: 100%; margin-bottom: 1rem;" />
           <button id="loginBtn" class="btn btn-primary" style="width: 100%;">Login</button>
@@ -35,6 +42,10 @@ export function renderAuthForms() {
 }
 
 export function setupAuthFormsEvents(rerender) {
+  if (authMode === 'login') {
+    setupGoogleSignIn(rerender);
+  }
+
   document.getElementById('showRegister')?.addEventListener('click', (e) => {
     e.preventDefault();
     authMode = 'register';

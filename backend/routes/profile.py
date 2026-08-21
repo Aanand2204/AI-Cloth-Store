@@ -2,12 +2,12 @@
 Account management endpoints: view/edit profile, avatar upload, account deletion.
 Registration/login live in auth.py.
 """
-import re
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 
 from ..database import users_collection, cart_collection
 from ..models import ProfileUpdate, AccountDelete
 from ..utils.images import encode_upload_to_base64, to_data_url
+from ..utils.mongo import case_insensitive_exact
 from ..utils.passwords import hash_password, verify_password
 from ..utils.users import public_user
 
@@ -39,9 +39,7 @@ def update_profile(payload: ProfileUpdate):
     if payload.new_username:
         new_username = payload.new_username.strip()
         if new_username.lower() != user["username"].lower():
-            existing = users_collection.find_one(
-                {"username": {"$regex": f"^{re.escape(new_username)}$", "$options": "i"}}
-            )
+            existing = users_collection.find_one({"username": case_insensitive_exact(new_username)})
             if existing and existing["_id"] != user["_id"]:
                 raise HTTPException(status_code=400, detail="That username is already taken")
         update_fields["username"] = new_username

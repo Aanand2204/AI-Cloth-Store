@@ -2,6 +2,7 @@
 bcrypt
 pymongo
 python-dotenv
+google-auth
 
 # backend
 fastapi
@@ -20,3 +21,6 @@ pydantic-ai
 groq
 pydantic-ai-slim[tavily]
 pydantic-evals
+
+# testing
+pytest

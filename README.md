@@ -92,6 +92,21 @@ Here are the primary routes:
 
 ---
 
+## 🧪 Testing
+
+Run the test suite (fast, offline — every DB call and LLM call is mocked, so it costs nothing and never touches the real Atlas cluster or Groq/Portkey):
+```bash
+pytest
+```
+
+A pre-push hook runs this automatically and blocks the push if anything fails. Since git hooks aren't cloned automatically, **run this once after cloning** to activate it:
+```bash
+git config core.hooksPath githooks
+```
+Bypass it for a single push with `git push --no-verify` (not recommended).
+
+---
+
 ## 📝 License
 
 Distributed under the **MIT License**. Have fun building!

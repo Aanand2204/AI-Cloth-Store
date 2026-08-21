@@ -8,6 +8,7 @@ from bson import ObjectId
 from ..database import products_collection
 from ..auth import require_admin
 from ..utils.images import encode_upload_to_base64, resolve_image_field
+from ..utils.mongo import case_insensitive_exact
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -49,7 +50,7 @@ def get_products(category: str = "", min_price: int = None, max_price: int = Non
     Get products with optional category, min_price, and max_price filters.
     """
     products = []
-    query = {"category": {"$regex": f"^{category}$", "$options": "i"}} if category else {}
+    query = {"category": case_insensitive_exact(category)} if category else {}
 
     # Apply price range filter
     if min_price is not None or max_price is not None:

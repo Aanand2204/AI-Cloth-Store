@@ -1,10 +1,10 @@
-import { API_BASE } from './common.js';
+import { API_BASE, INGESTION_API_BASE } from './common.js';
 
 /**
  * Place a new order directly.
  */
 export async function placeOrder(userEmail, productName, quantity = 1, price = 0) {
-  const res = await fetch(`${API_BASE}/orders`, {
+  const res = await fetch(`${INGESTION_API_BASE}/orders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ user_email: userEmail, product_name: productName, quantity, price })

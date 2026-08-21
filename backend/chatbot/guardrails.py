@@ -4,13 +4,28 @@ screened before a message ever reaches the main agent:
 
 - Llama Prompt Guard 2: detects prompt injection / jailbreak attempts.
 - gpt-oss-safeguard-20b: checks the message against a content policy.
+
+Routed through Portkey when configured (see utils/llm_gateway.py), otherwise
+calls Groq directly.
 """
 from dotenv import load_dotenv
 from groq import AsyncGroq
+from openai import AsyncOpenAI
+
+from ..utils.llm_gateway import (
+    PORTKEY_API_KEY,
+    PORTKEY_BASE_URL,
+    is_portkey_configured,
+    resolve_model_name,
+)
 
 load_dotenv()
 
-guardrail_client = AsyncGroq()
+guardrail_client = (
+    AsyncOpenAI(api_key=PORTKEY_API_KEY, base_url=PORTKEY_BASE_URL)
+    if is_portkey_configured()
+    else AsyncGroq()
+)
 
 GUARDRAIL_BLOCKED_MESSAGE = (
     "Sorry, I can't help with that. For assistance, contact our customer care at 546464434."
@@ -35,7 +50,7 @@ CONTENT_POLICY = (
 async def is_prompt_injection(user_message: str) -> bool:
     """True if Llama Prompt Guard 2 flags this as an injection/jailbreak attempt."""
     response = await guardrail_client.chat.completions.create(
-        model="meta-llama/llama-prompt-guard-2-86m",
+        model=resolve_model_name("meta-llama/llama-prompt-guard-2-86m"),
         messages=[{"role": "user", "content": user_message}],
     )
     try:
@@ -48,7 +63,7 @@ async def is_prompt_injection(user_message: str) -> bool:
 async def violates_content_policy(user_message: str) -> bool:
     """True if gpt-oss-safeguard-20b flags this message as unsafe."""
     response = await guardrail_client.chat.completions.create(
-        model="openai/gpt-oss-safeguard-20b",
+        model=resolve_model_name("openai/gpt-oss-safeguard-20b"),
         messages=[
             {"role": "system", "content": CONTENT_POLICY},
             {"role": "user", "content": user_message},

@@ -1,15 +1,16 @@
 """
 Core identity endpoints: admin status check, and email/password registration
-& login. Account editing (profile/avatar/delete) lives in profile.py.
-Accounts (username, email, hashed password) are stored in MongoDB, never in .env.
+& login. Google Sign-In lives in google_auth.py; account editing
+(profile/avatar/delete) lives in profile.py. Accounts (username, email,
+hashed password) are stored in MongoDB, never in .env.
 """
-import re
 from fastapi import APIRouter, HTTPException
 from pymongo.errors import DuplicateKeyError
 
 from ..auth import is_admin
 from ..database import users_collection
 from ..models import UserRegister, UserLogin
+from ..utils.mongo import case_insensitive_exact
 from ..utils.passwords import hash_password, verify_password
 from ..utils.users import public_user
 
@@ -38,7 +39,7 @@ def register(user: UserRegister):
 
     if users_collection.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="An account with that email already exists")
-    if users_collection.find_one({"username": {"$regex": f"^{re.escape(username)}$", "$options": "i"}}):
+    if users_collection.find_one({"username": case_insensitive_exact(username)}):
         raise HTTPException(status_code=400, detail="That username is already taken")
 
     new_user = {
@@ -61,7 +62,7 @@ def login(credentials: UserLogin):
     user = users_collection.find_one({
         "$or": [
             {"email": identifier.lower()},
-            {"username": {"$regex": f"^{re.escape(identifier)}$", "$options": "i"}},
+            {"username": case_insensitive_exact(identifier)},
         ]
     })
     if not user or not verify_password(credentials.password, user["password_hash"]):

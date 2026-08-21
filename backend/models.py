@@ -59,3 +59,8 @@ class AccountDelete(BaseModel):
     """Payload to permanently delete an account."""
     email: str
     password: str
+
+
+class GoogleAuth(BaseModel):
+    """Payload for Google Sign-In: the ID token JWT from Google Identity Services."""
+    credential: str

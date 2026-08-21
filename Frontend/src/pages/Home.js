@@ -1,5 +1,6 @@
 import { state } from '../services/state.js';
-import { fetchProducts, sendChatMessage, addToCart } from '../services/api_v2.js';
+import { fetchProducts, sendChatMessage } from '../services/api_v2.js';
+import { handleAddToCartClick } from '../services/cartActions.js';
 import { renderHeader } from '../components/Header.js';
 import { renderHero } from '../components/Hero.js';
 import { renderChatbot } from '../components/Chatbot.js';
@@ -97,25 +98,8 @@ function setupHomeEvents() {
     card.addEventListener('click', async (e) => {
       if (e.target.classList.contains('add-to-cart-btn')) {
         e.stopPropagation();
-        
-        try {
-          const product = state.products.find(p => p.id === card.dataset.id || String(p.id) === card.dataset.id) || { name: 'Unknown Product' };
-          e.target.disabled = true;
-          e.target.textContent = 'Adding...';
-          
-          await addToCart(state.sessionId, product.name, 1);
-          
-          state.cartItemCount++;
-          e.target.textContent = 'Added! ✅';
-          setTimeout(() => {
-            renderHome();
-          }, 1000);
-        } catch (err) {
-          console.error('Failed to add to cart:', err);
-          alert('Failed to add to cart.');
-          e.target.disabled = false;
-          e.target.textContent = 'Add to Cart';
-        }
+        const product = state.products.find(p => p.id === card.dataset.id || String(p.id) === card.dataset.id) || { name: 'Unknown Product' };
+        await handleAddToCartClick(e.target, product.name, { onSuccess: () => renderHome() });
       } else {
         navigate(`#/product/${card.dataset.id}`);
       }

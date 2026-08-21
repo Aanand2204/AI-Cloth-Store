@@ -1,6 +1,8 @@
 import { state } from '../services/state.js';
-import { fetchProducts, addToCart, placeOrder } from '../services/api_v2.js';
+import { fetchProducts, placeOrder } from '../services/api_v2.js';
+import { handleAddToCartClick } from '../services/cartActions.js';
 import { renderHeader } from '../components/Header.js';
+import { PLACEHOLDER_IMAGE } from '../utils/placeholder.js';
 
 export async function renderProductDetail(id) {
   const data = await fetchProducts();
@@ -20,7 +22,7 @@ export async function renderProductDetail(id) {
       <button class="back-btn" id="backBtn">← Back to Products</button>
       <div class="product-detail-grid">
         <div class="product-detail-image">
-          <img src="${product.image || 'https://via.placeholder.com/500x500?text=Product+Image'}" alt="${product.name}" />
+          <img src="${product.image || PLACEHOLDER_IMAGE}" alt="${product.name}" />
         </div>
         <div class="product-detail-info">
           <span class="product-detail-category">${product.category}</span>
@@ -57,27 +59,8 @@ export async function renderProductDetail(id) {
   });
 
   document.getElementById('btnAddToCart')?.addEventListener('click', async (e) => {
-    try {
-      e.target.disabled = true;
-      e.target.textContent = 'Adding...';
-      
-      await addToCart(state.sessionId, product.name, 1);
-      
-      state.cartItemCount++;
-      e.target.textContent = 'Added! ✅';
-      setTimeout(() => {
-        e.target.textContent = 'Add to Cart';
-        e.target.disabled = false;
-        // Optionally update header to reflect new cart count
-        const app = document.getElementById('app');
-        if(app) renderProductDetail(id);
-      }, 1500);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to add to cart');
-      e.target.disabled = false;
-      e.target.textContent = 'Add to Cart';
-    }
+    // Re-rendering the page naturally resets the button; matches the cart count in the header too.
+    await handleAddToCartClick(e.target, product.name, { onSuccess: () => renderProductDetail(id), delay: 1500 });
   });
 
   document.getElementById('btnBuyNow')?.addEventListener('click', async (e) => {

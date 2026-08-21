@@ -1,10 +1,10 @@
-import { API_BASE } from './common.js';
+import { API_BASE, INGESTION_API_BASE } from './common.js';
 
 /**
  * Add an item to the shopping cart.
  */
 export async function addToCart(userEmail, productName, quantity = 1) {
-  const res = await fetch(`${API_BASE}/cart/add`, {
+  const res = await fetch(`${INGESTION_API_BASE}/cart/add`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ user_email: userEmail, product_name: productName, quantity })
@@ -24,6 +24,6 @@ export async function getCart(userEmail) {
  * Clear the user's cart completely.
  */
 export async function clearCart(userEmail) {
-  const res = await fetch(`${API_BASE}/cart/${userEmail}`, { method: 'DELETE' });
+  const res = await fetch(`${INGESTION_API_BASE}/cart/${userEmail}`, { method: 'DELETE' });
   return await res.json();
 }

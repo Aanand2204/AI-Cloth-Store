@@ -1,14 +1,28 @@
 """
 The Pydantic AI shopping agent: system prompt, dependencies, and its
 `search_products` tool for querying the ClothStore MongoDB catalog.
+
+Routed through Portkey when configured (see utils/llm_gateway.py), otherwise
+talks to Groq directly.
 """
 from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
 from ..database import products_collection
 from ..utils.images import resolve_image_field
+from ..utils.mongo import case_insensitive_contains, case_insensitive_exact
+from ..utils.llm_gateway import (
+    PORTKEY_API_KEY,
+    PORTKEY_BASE_URL,
+    is_portkey_configured,
+    resolve_model_name,
+)
+
+RAW_AGENT_MODEL = "qwen/qwen3.6-27b"
 
 
 class StoreDeps(BaseModel):
@@ -19,8 +33,16 @@ class StoreDeps(BaseModel):
         arbitrary_types_allowed = True
 
 
+if is_portkey_configured():
+    agent_model = OpenAIChatModel(
+        model_name=resolve_model_name(RAW_AGENT_MODEL),
+        provider=OpenAIProvider(base_url=PORTKEY_BASE_URL, api_key=PORTKEY_API_KEY),
+    )
+else:
+    agent_model = f"groq:{RAW_AGENT_MODEL}"
+
 agent = Agent(
-    "groq:qwen/qwen3.6-27b",
+    agent_model,
     deps_type=StoreDeps,
     system_prompt=(
         "You are a friendly shopping assistant for ClothStore — an online clothing store. "
@@ -60,10 +82,10 @@ def search_products(
     query: Dict[str, Any] = {}
 
     if category:
-        query["category"] = {"$regex": f"^{category.strip()}$", "$options": "i"}
+        query["category"] = case_insensitive_exact(category.strip())
 
     if keyword:
-        query["name"] = {"$regex": keyword.strip(), "$options": "i"}
+        query["name"] = case_insensitive_contains(keyword.strip())
 
     price_filter: Dict[str, int] = {}
     if max_price is not None:

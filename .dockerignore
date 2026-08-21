@@ -13,6 +13,10 @@ myenv/
 venv/
 ENV/
 env/
+clothenv/
+
+# Git metadata (never needed in the image, can be large)
+.git/
 
 # Environment variables
 .env

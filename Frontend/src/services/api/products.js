@@ -1,4 +1,4 @@
-import { API_BASE, adminHeaders } from './common.js';
+import { API_BASE, INGESTION_API_BASE, adminHeaders } from './common.js';
 
 /**
  * Fetch products, optionally filtering by category and/or price range.
@@ -17,7 +17,7 @@ export async function fetchProducts(category = '', minPrice = null, maxPrice = n
  * Generate 500 demo products instantaneously via the backend Python script.
  */
 export async function bulkGenerateProducts() {
-  const res = await fetch(`${API_BASE}/products/bulk-generate-500`, {
+  const res = await fetch(`${INGESTION_API_BASE}/products/bulk-generate-500`, {
     method: 'POST',
     headers: adminHeaders()
   });
@@ -28,7 +28,7 @@ export async function bulkGenerateProducts() {
  * Add a new product to the database (requires FormData for image handling).
  */
 export async function addProduct(formData) {
-  const res = await fetch(`${API_BASE}/products`, {
+  const res = await fetch(`${INGESTION_API_BASE}/products`, {
     method: 'POST',
     headers: adminHeaders(),
     body: formData
@@ -44,7 +44,7 @@ export async function bulkUploadProducts(excelFile, zipFile) {
   const formData = new FormData();
   formData.append('excel_file', excelFile);
   formData.append('images_zip', zipFile);
-  const res = await fetch(`${API_BASE}/products/bulk-upload`, {
+  const res = await fetch(`${INGESTION_API_BASE}/products/bulk-upload`, {
     method: 'POST',
     headers: adminHeaders(),
     body: formData
@@ -68,7 +68,7 @@ export async function updateProduct(id, body, isFormData = false) {
   if (!isFormData) {
     options.headers = { ...options.headers, 'Content-Type': 'application/json' };
   }
-  const res = await fetch(`${API_BASE}/products/${id}`, options);
+  const res = await fetch(`${INGESTION_API_BASE}/products/${id}`, options);
   return await res.json();
 }
 
@@ -76,7 +76,7 @@ export async function updateProduct(id, body, isFormData = false) {
  * Delete a product by its ID.
  */
 export async function deleteProduct(id) {
-  const res = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE', headers: adminHeaders() });
+  const res = await fetch(`${INGESTION_API_BASE}/products/${id}`, { method: 'DELETE', headers: adminHeaders() });
   return await res.json();
 }
 
@@ -84,6 +84,6 @@ export async function deleteProduct(id) {
  * Delete all products from the database.
  */
 export async function deleteAllProducts() {
-  const res = await fetch(`${API_BASE}/products`, { method: 'DELETE', headers: adminHeaders() });
+  const res = await fetch(`${INGESTION_API_BASE}/products`, { method: 'DELETE', headers: adminHeaders() });
   return await res.json();
 }
