@@ -30,6 +30,18 @@ app.include_router(auth.router)
 app.include_router(google_auth.router)
 app.include_router(profile.router)
 
+
+@app.get("/config")
+def frontend_config():
+    """
+    Tells the frontend where the ingestion service lives. The monolith serves
+    both reads and writes itself, so ingestion is just this same origin —
+    without this, the frontend falls back to guessing port 8001 (the split
+    services' ingestion port), which isn't running here and breaks any write
+    call (e.g. Google sign-in) with a fetch failure.
+    """
+    return {"ingestion_base_url": ""}
+
 # Serve uploaded files statically
 from fastapi.staticfiles import StaticFiles
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

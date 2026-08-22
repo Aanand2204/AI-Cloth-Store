@@ -1,6 +1,6 @@
 """
 Ingestion service — every endpoint that writes to MongoDB: product
-create/update/delete, bulk ingestion (demo-gen, JSON bulk, Excel+zip upload),
+create/update/delete, bulk ingestion (JSON bulk, Excel+zip upload),
 account registration/login/edits, cart writes, and order placement.
 
 Reuses the exact same endpoint functions as the monolith (main.py) and the
@@ -16,7 +16,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.routes.products import add_product, delete_all_products, delete_product, update_product
-from backend.routes.products_bulk import add_multiple_products, bulk_generate_500, bulk_upload_products
+from backend.routes.products_bulk import add_multiple_products, bulk_upload_products
 from backend.routes.auth import login, register
 from backend.routes.google_auth import google_login
 from backend.routes.profile import delete_account, update_profile, upload_avatar
@@ -43,7 +43,6 @@ products_router.add_api_route("", add_product, methods=["POST"])
 products_router.add_api_route("", delete_all_products, methods=["DELETE"])
 products_router.add_api_route("/{id}", update_product, methods=["PUT"])
 products_router.add_api_route("/{id}", delete_product, methods=["DELETE"])
-products_router.add_api_route("/bulk-generate-500", bulk_generate_500, methods=["POST"])
 products_router.add_api_route("/bulk", add_multiple_products, methods=["POST"])
 products_router.add_api_route("/bulk-upload", bulk_upload_products, methods=["POST"])
 app.include_router(products_router)

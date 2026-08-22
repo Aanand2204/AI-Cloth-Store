@@ -23,7 +23,7 @@ export async function initIngestionApiBase() {
     const res = await fetch(`${API_BASE}/config`);
     if (!res.ok) return;
     const data = await res.json();
-    if (data.ingestion_base_url) {
+    if (data.ingestion_base_url !== undefined && data.ingestion_base_url !== null) {
       INGESTION_API_BASE = data.ingestion_base_url;
     }
   } catch (err) {

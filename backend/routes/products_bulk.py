@@ -1,11 +1,10 @@
 """
-Bulk product ingestion routes: demo-data generation, JSON bulk-add, and the
-Excel + images-zip bulk upload pipeline. Single-product CRUD lives in products.py.
+Bulk product ingestion routes: JSON bulk-add and the Excel + images-zip bulk
+upload pipeline. Single-product CRUD lives in products.py.
 """
 import base64
 import io
 import mimetypes
-import random
 import zipfile
 
 import openpyxl
@@ -16,81 +15,6 @@ from ..database import products_collection
 from ..auth import require_admin
 
 router = APIRouter(prefix="/products", tags=["Products"])
-
-
-@router.post("/bulk-generate-500")
-def bulk_generate_500(admin_email: str = Depends(require_admin)):
-    """
-    Generate 500 demo clothing products across 3 categories: men, women, kids.
-    Items are consistent and keyword-searchable (e.g. "Classic Blue Jeans").
-    Each category gets ~166 products cycling through real clothing item types.
-    Images come from loremflickr.com using category-specific fashion keywords.
-    """
-    adjectives = ["Classic", "Modern", "Premium", "Casual", "Elegant", "Trendy",
-                  "Vintage", "Sporty", "Bold", "Slim", "Relaxed", "Formal"]
-    colors = ["Black", "White", "Navy Blue", "Red", "Olive", "Beige",
-              "Burgundy", "Mustard", "Grey", "Pink", "Teal", "Brown"]
-
-    categories = [
-        {
-            "name": "men",
-            "items": ["Shirt", "T-Shirt", "Jeans", "Chinos", "Blazer",
-                      "Jacket", "Polo", "Sweater", "Hoodie", "Shorts"],
-            "keywords": ["menswear", "mens+shirt", "mens+fashion", "mens+jacket"],
-        },
-        {
-            "name": "women",
-            "items": ["Dress", "Kurti", "Saree", "Lehenga", "Blouse",
-                      "Top", "Skirt", "Palazzo", "Jumpsuit", "Cardigan"],
-            "keywords": ["womens+fashion", "dress", "womens+clothing", "blouse"],
-        },
-        {
-            "name": "kids",
-            "items": ["T-Shirt", "Frock", "Dungaree", "Shorts", "Jacket",
-                      "Pajama", "Romper", "Hoodie", "Sweater", "Shirt"],
-            "keywords": ["kids+fashion", "children+clothing", "kids+wear"],
-        },
-    ]
-
-    descriptions = [
-        "A comfortable fit for everyday wear.",
-        "Premium quality fabric, perfect for all occasions.",
-        "Stylish and versatile — a must-have for your wardrobe.",
-        "Crafted with care for maximum comfort and durability.",
-        "Trendy design that keeps you looking sharp all day.",
-        "Soft, breathable material ideal for the season.",
-        "A timeless piece that pairs well with everything.",
-        "Lightweight and easy to wear — perfect for daily use.",
-        "A bold look that makes a statement.",
-        "Expertly tailored for a modern silhouette.",
-    ]
-
-    sizes_pool = ["S", "M", "L", "XL", "XXL"]
-    products = []
-
-    for i in range(500):
-        cat = categories[i % 3]          # cycle evenly: men, women, kids
-        item = cat["items"][i % len(cat["items"])]   # cycle through item types
-        adj = adjectives[i % len(adjectives)]
-        color = colors[i % len(colors)]
-        keyword = cat["keywords"][i % len(cat["keywords"])]
-        seed = 1000 + i
-
-        products.append({
-            "name": f"{adj} {color} {item}",
-            "description": descriptions[i % len(descriptions)],
-            "price": random.randint(299, 7999),
-            "category": cat["name"],
-            "size": random.sample(sizes_pool, k=random.randint(2, 4)),
-            "color": [color],
-            "image": f"https://loremflickr.com/400/500/{keyword}?lock={seed}",
-            "inStock": True,
-            "rating": round(random.uniform(3.5, 5.0), 1),
-            "reviews": random.randint(5, 300),
-        })
-
-    products_collection.insert_many(products)
-    return {"message": "500 demo products generated successfully!"}
 
 
 @router.post("/bulk")

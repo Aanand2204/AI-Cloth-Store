@@ -138,17 +138,6 @@ def test_delete_all_products_as_admin(client, admin_headers):
     assert client.get("/products").json() == []
 
 
-def test_bulk_generate_500_requires_admin(client):
-    res = client.post("/products/bulk-generate-500")
-    assert res.status_code == 403
-
-
-def test_bulk_generate_500_as_admin(client, admin_headers):
-    res = client.post("/products/bulk-generate-500", headers=admin_headers)
-    assert res.status_code == 200
-    assert len(client.get("/products").json()) == 500
-
-
 def test_bulk_json_add_requires_admin(client):
     res = client.post("/products/bulk", json=[])
     assert res.status_code == 403

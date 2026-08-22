@@ -21,7 +21,6 @@ def test_bulk_and_profile_routes_present():
 
     for expected_path in [
         "/products/bulk",
-        "/products/bulk-generate-500",
         "/products/bulk-upload",
         "/auth/register",
         "/auth/login",

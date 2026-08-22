@@ -98,7 +98,6 @@ graph TD
 | PUT | `/products/{id}` | Update a product |
 | DELETE | `/products/{id}` | Delete a product |
 | DELETE | `/products` | Delete all products |
-| POST | `/products/bulk-generate-500` | 🚀 Auto-generate 500 demo products |
 | POST | `/orders` | Place order |
 | POST | `/cart/add` | Add to cart |
 | GET | `/cart/{email}` | Get cart items |
@@ -123,6 +122,3 @@ python main.py
 ```
 
 Open browser at `http://localhost:8000`
-
-> [!TIP]
-> After starting, navigate to **Add Products** in the navbar and click **⚡ Generate 500 Demo Products** to instantly populate the store with sample clothing!

@@ -14,17 +14,6 @@ export async function fetchProducts(category = '', minPrice = null, maxPrice = n
 }
 
 /**
- * Generate 500 demo products instantaneously via the backend Python script.
- */
-export async function bulkGenerateProducts() {
-  const res = await fetch(`${INGESTION_API_BASE}/products/bulk-generate-500`, {
-    method: 'POST',
-    headers: adminHeaders()
-  });
-  return await res.json();
-}
-
-/**
  * Add a new product to the database (requires FormData for image handling).
  */
 export async function addProduct(formData) {
