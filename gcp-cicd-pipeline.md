@@ -24,8 +24,18 @@ This guide walks you through setting up a CI/CD pipeline using the **GCP Console
 1. **Open Google Cloud Shell**: Click the `>_` (Activate Cloud Shell) icon in the top right corner of the GCP Console.
 2. **Open Cloud Shell Editor**: Once the shell opens at the bottom, click **Open Editor** (the pencil icon or "Open Editor" button) to get a VS Code-like interface in your browser.
 3. **Clone Your Repository**:
-   - In the Cloud Shell terminal, you can clone your GitHub/Gitlab repo if it's hosted there. 
+   - In the Cloud Shell terminal, clone your GitHub/Gitlab repo if it's hosted there. 
    - `git clone <your-repo-url>`
+   - Navigate into the project folder in the file explorer before proceeding.
+
+### Important Preparations
+- **Git Config**: Before committing for the first time in Cloud Shell, open the terminal and run:
+  ```bash
+  git config --global user.email "your-email@example.com"
+  git config --global user.name "Your Name"
+  ```
+- **.gitignore**: Make sure your Python virtual environment folder (e.g., `clothenv/`, `venv/`, `env/`) is listed in your `.gitignore` file. If it isn't, Git will try to commit thousands of files, causing your editor to hang or take a very long time!
+
 4. **Create a `cloudbuild.yaml` File**:
    - Using the Cloud Shell Editor, create a new file named `cloudbuild.yaml` at the root of your project.
    - Add the following CI/CD configuration:
@@ -57,11 +67,14 @@ steps:
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloth-store-repo/main-app:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
 ```
-*(Make sure to match the region to the one you chose in Artifact Registry)*.
+*(Note: The `logging: CLOUD_LOGGING_ONLY` option prevents errors related to missing logs buckets when Cloud Build runs.)*
 
 5. **Commit the Configuration**:
-   - Use the Source Control tab on the left sidebar of the Cloud Shell Editor to stage, commit, and push this new `cloudbuild.yaml` file to your repository.
+   - Use the Source Control tab on the left sidebar to stage, commit, and push this new `cloudbuild.yaml` file to your repository.
 
 ## Phase 3: Create the CI/CD Trigger in Cloud Build
 
@@ -78,15 +91,40 @@ images:
 
 ## Phase 4: Service Account Permissions (Crucial Step)
 
-Cloud Build needs permission to deploy to Cloud Run.
-1. Go to **Cloud Build** > **Settings** in the GCP console.
-2. In the "Service account permissions" section, find **Cloud Run Admin** and set the status to **ENABLE**.
-3. Additionally, you may need to grant the **Service Account User** role to the Cloud Build service account via IAM.
+Your Cloud Build service account needs permission to push images and deploy to Cloud Run.
+
+1. Go to **IAM & Admin** > **IAM** in the GCP console.
+2. Find the service account being used by Cloud Build. This is usually your Default Compute Service Account (e.g., `123456789-compute@developer.gserviceaccount.com`).
+3. Click the **pencil icon (Edit principal)** next to it.
+4. Ensure it has the following roles (click **+ ADD ANOTHER ROLE** to add missing ones):
+   - **Cloud Run Admin** (to deploy the service)
+   - **Artifact Registry Writer** (to push the Docker image)
+5. Click **Save**.
 
 ## Phase 5: Test the Pipeline
 
-1. Test it immediately in the GCP Console by going to **Cloud Build** > **Triggers** and clicking **RUN** on the trigger you just created.
-2. Alternatively, use the Cloud Shell Editor to make a small change, commit it, and push it.
-3. Go to **Cloud Build** > **History** to watch the pipeline execute. 
+1. Test it immediately in the GCP Console by going to **Cloud Build** > **Triggers** and clicking **RUN**.
+2. Go to **Cloud Build** > **History** to watch the pipeline execute. 
 
-Once finished, navigate to **Cloud Run** in the GCP Console, click on your `cloth-store-backend` service, and you will find the live public URL for your deployed application!
+## Phase 6: Post-Deployment Configuration
+
+### 1. Adding Environment Variables (Secrets & Database)
+Because your `.env` file is excluded from Git (for security), Cloud Run won't have access to your database strings or API keys automatically, which will cause your application to crash on startup!
+
+1. Go to **Cloud Run** in the GCP Console.
+2. Click on your `cloth-store-backend` service.
+3. Click **EDIT & DEPLOY NEW REVISION** at the top.
+4. Go to the **Containers, Volumes, Networking, Security** tab.
+5. Under **Variables & Secrets**, add all the variables from your local `.env` file (e.g., `MONGO_URI`, `GOOGLE_CLIENT_ID`, `GROQ_API_KEY`).
+6. Click **DEPLOY**. 
+*(Future automated deployments from Cloud Build will keep these variables intact).*
+
+### 2. Fixing Google Auth Origin Mismatch
+If you use Google Sign-In, you will get an `origin_mismatch` error when trying to log in on the live site because the Cloud Run URL isn't authorized.
+
+1. Open a new tab and go to your **Cloud Run** service page. Copy the exact **URL** of your deployed service (e.g., `https://cloth-store-backend-xxxxxxxx-uc.a.run.app`).
+2. Go to **APIs & Services** > **Credentials**.
+3. Click on the correct OAuth 2.0 Client ID (ensure the Client ID string exactly matches the `GOOGLE_CLIENT_ID` environment variable you added to Cloud Run).
+4. Under **Authorized JavaScript origins**, click **+ ADD URI** and paste your exact Cloud Run URL.
+5. Do the same under **Authorized redirect URIs**.
+6. Click **SAVE**. *(Note: Google can take 5-15 minutes to fully update this globally. Wait a few minutes before testing).*

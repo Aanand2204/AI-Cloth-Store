@@ -75,3 +75,6 @@ Frontend/.env
 
 shopenv/
 clothenv/
+
+cloudbuild.yaml
+
