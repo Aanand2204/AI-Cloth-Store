@@ -1,0 +1,195 @@
+# Complete Step-by-Step Guide: Deploying to Google Cloud Run with CI/CD
+
+This `commands.md` file provides an extremely detailed, foolproof guide to deploying your project on Google Cloud Platform (GCP) using **Cloud Run**, **Artifact Registry**, and **Cloud Build**. 
+
+By the end of this guide, your code will automatically deploy every time you push to your GitHub/GitLab repository!
+
+---
+
+## Phase 1: Setting up Your Google Cloud Account
+
+Before anything else, you need a GCP account and a project.
+
+### 1. Create a Google Account
+If you don't have one, go to [accounts.google.com](https://accounts.google.com/signup) and create a standard Google Account.
+
+### 2. Log into Google Cloud Console
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Sign in with your Google account.
+3. Accept the Terms of Service.
+
+### 3. Enable Billing (Required)
+Google Cloud requires a billing account to deploy services, even if you are on the free tier.
+1. Click on the **Navigation Menu** (hamburger icon, top left) > **Billing**.
+2. Click **Link a billing account** or **Add Billing Account**.
+3. Fill in your details (country, address, credit card). You will get a $300 free trial, and you won't be charged unless you manually upgrade later.
+
+### 4. Create a New Project
+1. In the top blue navigation bar, click on the **Project Dropdown** (it might say "Select a project").
+2. Click **New Project** in the top right of the popup.
+3. Name it something recognizable (e.g., `cloth-store-production`).
+4. Click **Create**.
+5. **Crucial:** Once created, click the Project Dropdown again and **select your new project**.
+
+---
+
+## Phase 2: Enabling APIs and Setting Up Storage
+
+GCP services are disabled by default to save resources. We need to turn on the ones we need.
+
+### 1. Enable Required APIs
+1. At the top of the GCP console, use the Search Bar.
+2. Search for **Cloud Build API** and click on it. Click **Enable**.
+3. Search for **Artifact Registry API** and click on it. Click **Enable**.
+4. Search for **Cloud Run Admin API** and click on it. Click **Enable**.
+
+### 2. Create an Artifact Registry (To store your Docker images)
+1. In the GCP Search Bar, type **Artifact Registry** and click it.
+2. Click **+ CREATE REPOSITORY** at the top.
+3. **Name:** `cloth-store-repo`
+4. **Format:** Docker
+5. **Region:** Choose a region close to you (e.g., `us-central1`). *Remember this region, you will need it later.*
+6. Scroll down and click **Create**.
+
+---
+
+## Phase 3: Writing the Configuration File
+
+We need to tell Google Cloud how to build and deploy your application.
+
+### 1. Open Your Project Locally
+Open your project folder in your code editor (e.g., VS Code).
+
+### 2. Create `cloudbuild.yaml`
+In the root of your project folder (right next to your `Dockerfile` and `.env`), create a new file named exactly `cloudbuild.yaml`.
+
+### 3. Add the Pipeline Code
+Copy and paste the exact code below into your `cloudbuild.yaml`. 
+*(Note: If you picked a different region earlier, replace `us-central1` below with your chosen region).*
+
+```yaml
+
+#Remember to update cloth-store-repo to your artifact repo name
+
+steps:
+  # 1. Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloth-store-repo/main-app:$COMMIT_SHA', '.']
+    
+  # 2. Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloth-store-repo/main-app:$COMMIT_SHA']
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cloth-store-backend'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloth-store-repo/main-app:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8000' # Change this if your app runs on a different port internally!
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloth-store-repo/main-app:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+```
+
+### 4. Push to GitHub/GitLab
+1. Save the `cloudbuild.yaml` file.
+2. Commit and push this change to your repository branch (e.g., `main`).
+```bash
+git add cloudbuild.yaml
+git commit -m "Add Cloud Build configuration"
+git push origin main
+```
+
+---
+
+## Phase 4: Granting Permissions (IAM)
+
+This is the most common place where beginners get stuck. Cloud Build acts like an automated robot, and that robot needs permission to push files to the Artifact Registry and run the deployment.
+
+### 1. Find Your Cloud Build Service Account
+1. In the GCP Console, search for **IAM** in the top bar and click **IAM**.
+2. Look through the list of "Principals" for an email address that ends in `@cloudbuild.gserviceaccount.com` OR has the name **Compute Engine default service account** (ending in `@developer.gserviceaccount.com`).
+3. Click the **Pencil Icon (Edit Principal)** on the right side of that row.
+
+### 2. Add Required Roles
+1. In the Edit window, click **+ ADD ANOTHER ROLE**.
+2. Search for and select **Cloud Run Admin**.
+3. Click **+ ADD ANOTHER ROLE** again.
+4. Search for and select **Artifact Registry Writer**.
+5. Click **+ ADD ANOTHER ROLE** again (optional but recommended).
+6. Search for and select **Service Account User**.
+7. Click **+ ADD ANOTHER ROLE** again (optional but recommended).
+8. Search for and select **Logs Writer**.
+9. Click **Save**.
+
+---
+
+## Phase 5: Setting Up the Automation (The Trigger)
+
+Now we connect your GitHub/GitLab repository to GCP so that pushing code automatically starts the deployment.
+
+### 1. Connect Your Repository
+1. In the GCP Search Bar, type **Cloud Build** and select it.
+2. On the left sidebar, click **Triggers**.
+3. Click **+ CREATE TRIGGER** at the top.
+
+### 2. Configure the Trigger
+1. **Name:** `cloth-store-pipeline`
+2. **Event:** Choose "Push to a branch"
+3. **Source:** 
+   - Click the dropdown and select **Connect new repository**.
+   - Select your provider (GitHub or GitLab).
+   - Authenticate and authorize Google Cloud.
+   - Select your specific repository (e.g., `Aanand2204/AI-Cloth-Store`).
+4. **Branch:** type `^main$` (This means it will only trigger when you push to the `main` branch. Change it to `^master$` if your branch is named master).
+5. **Configuration:** Select **Cloud Build configuration file (yaml or json)**.
+6. **Location:** Type `cloudbuild.yaml`.
+7. **Service Account:** Select the service account.
+8. Click **Create** at the bottom.
+
+---
+
+## Phase 6: Running the Deployment
+
+### 1. The Initial Run
+1. Still on the **Triggers** page, find your newly created `cloth-store-pipeline`.
+2. Click the **RUN** button on the far right.
+3. On the left sidebar, click **History**.
+4. Click on the build that is currently running to watch the live terminal output. 
+5. Wait for all steps to turn green. (This may take 3-10 minutes).
+
+*(Note: In the future, you do not need to click RUN. Just pushing code to your repository will automatically start this process!)*
+
+---
+
+## Phase 7: Post-Deployment Essentials
+
+If your build succeeds but your website shows a "Service Unavailable" or crashes, it's usually because you are missing your environment variables!
+
+### 1. Adding Environment Variables (Secrets)
+1. In the GCP Search bar, type **Cloud Run** and click it.
+2. You will see your deployed service named `cloth-store-backend`. Click on it.
+3. Click **EDIT & DEPLOY NEW REVISION** near the top.
+4. Click the **Containers, Volumes, Networking, Security** tab.
+5. Scroll down to **Variables & Secrets**.
+6. Click **+ ADD VARIABLE**.
+7. Add all the variables from your local `.env` file one by one.
+   - Example Name: `MONGO_URI`
+   - Example Value: `mongodb+srv://...`
+8. Scroll to the bottom and click **DEPLOY**.
+
+### 2. Get Your Live URL
+Once the new revision with your variables finishes deploying, look at the top of the Cloud Run service page. You will see a URL that looks like `https://cloth-store-backend-xxxxx-uc.a.run.app`. 
+
+**Click it! Your application is now live on the internet!**
