@@ -9,10 +9,16 @@ import logfire
 app = FastAPI()
 
 
-# Configure Logfire for Observability
-logfire.configure(send_to_logfire='if-token-present')
+# Configure Logfire for Observability.
+# The SDK looks for LOGFIRE_TOKEN; this project stores it as LOGFIRE_API_KEY in
+# .env, so pass it through explicitly (falls back to LOGFIRE_TOKEN / local creds).
+logfire.configure(
+    send_to_logfire='if-token-present',
+    token=os.getenv('LOGFIRE_TOKEN') or os.getenv('LOGFIRE_API_KEY'),
+)
 logfire.instrument_fastapi(app)
 logfire.instrument_pydantic()
+logfire.instrument_pydantic_ai()  # agent run traces + online-evaluation events
 
 # Create uploads folder for product images
 UPLOAD_FOLDER = "uploads"

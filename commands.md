@@ -127,9 +127,9 @@ This is the most common place where beginners get stuck. Cloud Build acts like a
 2. Search for and select **Cloud Run Admin**.
 3. Click **+ ADD ANOTHER ROLE** again.
 4. Search for and select **Artifact Registry Writer**.
-5. Click **+ ADD ANOTHER ROLE** again (optional but recommended).
+5. Click **+ ADD ANOTHER ROLE** again.
 6. Search for and select **Service Account User**.
-7. Click **+ ADD ANOTHER ROLE** again (optional but recommended).
+7. Click **+ ADD ANOTHER ROLE** again.
 8. Search for and select **Logs Writer**.
 9. Click **Save**.
 

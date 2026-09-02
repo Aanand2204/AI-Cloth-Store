@@ -12,6 +12,7 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from .online_evals import online_evaluation
 from ..database import products_collection
 from ..utils.images import resolve_image_field
 from ..utils.mongo import case_insensitive_contains, case_insensitive_exact
@@ -43,7 +44,9 @@ else:
 
 agent = Agent(
     agent_model,
+    name="chatbot",
     deps_type=StoreDeps,
+    capabilities=[online_evaluation],
     system_prompt=(
         "You are a friendly shopping assistant for ClothStore — an online clothing store. "
         "The store has 3 categories: men, women, and kids."
